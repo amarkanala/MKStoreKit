@@ -84,7 +84,7 @@
     //[[SKPaymentQueue defaultQueue] finishTransaction: transaction];
 }
 
-- (void) restoreTransaction: (SKPaymentTransaction *)transaction
+- (void)restoreTransaction:(SKPaymentTransaction *)transaction
 {
     [[MKStoreManager sharedManager] provideContentForTransaction:transaction];
     [[MKStoreManager sharedManager] restoreTransaction:transaction];

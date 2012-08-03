@@ -65,12 +65,14 @@
 
 // use this method to invoke a purchase
 - (void)buyFeature:(NSString*) featureId
-         onComplete:(void (^)(SKPaymentTransaction *completedTransaction, BOOL *finishTransaction)) completionBlock
+         onComplete:(void (^)(SKPaymentTransaction *completedTransaction)) completionBlock
         onCancelled:(void (^)(void)) cancelBlock;
+
+- (void)onUnfinishedTransactionCompleted:(void (^)(SKPaymentTransaction *completedTransaction))completionBlock;
 
 // use this method to restore a purchase
 - (void)restorePreviousTransactionsOnComplete:(void (^)()) completionBlock
-                         onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction, BOOL *finishTransaction)) restoredTransactionBlock
+                         onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction)) restoredTransactionBlock
                                        onError:(void (^)(NSError* error)) errorBlock;
 
 - (BOOL)canConsumeProduct:(NSString*) productName quantity:(int) quantity;
@@ -86,4 +88,5 @@
 - (void)restoreCompleted;
 - (void)restoreTransaction:(SKPaymentTransaction*)transaction;
 - (void)restoreFailedWithError:(NSError*) error;
+- (void)finishTransaction:(SKPaymentTransaction*)transaction;
 @end

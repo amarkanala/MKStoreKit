@@ -44,11 +44,11 @@
 @interface MKStoreManager () //private methods and properties
 
 @property (nonatomic, copy) void (^onTransactionCancelled)();
-@property (nonatomic, copy) void (^onTransactionCompleted)(SKPaymentTransaction *completedTransaction, BOOL *finishTransaction);
+@property (nonatomic, copy) void (^onTransactionCompleted)(SKPaymentTransaction *completedTransaction);
 
 @property (nonatomic, copy) void (^onRestoreFailed)(NSError* error);
 @property (nonatomic, copy) void (^onRestoreCompleted)();
-@property (nonatomic, copy) void (^onTransactionRestored)(SKPaymentTransaction *restoredTransaction, BOOL *finishTransaction);
+@property (nonatomic, copy) void (^onTransactionRestored)(SKPaymentTransaction *restoredTransaction);
 
 @property (nonatomic, strong) NSMutableArray *purchasableObjects;
 @property (nonatomic, strong) NSMutableDictionary *subscriptionProducts;
@@ -224,7 +224,7 @@ static MKStoreManager* _sharedStoreManager;
 }
 
 - (void)restorePreviousTransactionsOnComplete:(void (^)()) completionBlock
-                        onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction, BOOL *finishTransaction)) restoredTransactionBlock
+                        onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction)) restoredTransactionBlock
                                       onError:(void (^)(NSError* error)) errorBlock
 {
     self.onRestoreCompleted = completionBlock;
@@ -242,16 +242,21 @@ static MKStoreManager* _sharedStoreManager;
     self.onTransactionRestored = nil;
 }
 
+- (void)finishTransaction:(SKPaymentTransaction*)transaction
+{
+    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+}
+
 - (void)restoreTransaction:(SKPaymentTransaction*)transaction
 {
     if (self.onTransactionRestored)
     {
-        __block BOOL *finishTransaction = NO;
-        self.onTransactionRestored(transaction, finishTransaction);
-        if (finishTransaction)
-        {
-            [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        }
+        self.onTransactionRestored(transaction);
+    }
+    else
+    {
+        NSLog(@"RESTORE COMPLETED BUT NO BLOCKS %@", transaction.payment.productIdentifier);
+        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
     }
 }
 
@@ -440,8 +445,13 @@ static MKStoreManager* _sharedStoreManager;
 #endif
 }
 
+- (void)onUnfinishedTransactionCompleted:(void (^)(SKPaymentTransaction *completedTransaction))completionBlock
+{
+    self.onTransactionCompleted = completionBlock;
+}
+
 - (void)buyFeature:(NSString*) featureId
-        onComplete:(void (^)(SKPaymentTransaction *completedTransaction, BOOL *finishTransaction)) completionBlock
+        onComplete:(void (^)(SKPaymentTransaction *completedTransaction)) completionBlock
        onCancelled:(void (^)(void)) cancelBlock
 {
     self.onTransactionCompleted = completionBlock;
@@ -453,7 +463,7 @@ static MKStoreManager* _sharedStoreManager;
             [self showAlertWithTitle:NSLocalizedString(@"Review request approved", @"")
                              message:NSLocalizedString(@"You can use this feature for reviewing the app.", @"")];
             
-            if(self.onTransactionCompleted) self.onTransactionCompleted(nil,nil);
+            if(self.onTransactionCompleted) self.onTransactionCompleted(nil);
         }
         else
         {
@@ -569,33 +579,24 @@ static MKStoreManager* _sharedStoreManager;
     NSData *receiptData = nil;
 #endif
     
-    MKSKSubscriptionProduct *subscriptionProduct = [self.subscriptionProducts objectForKey:productIdentifier];
-    if(subscriptionProduct)
+    // check if product is a subscription product
+    if([[self.storeKitItems objectForKey:@"Subscriptions"] objectForKey:productIdentifier])
     {
         // MAC In App Purchases can never be a subscription product (at least as on Dec 2011)
         // so this can be safely ignored.
         
-        subscriptionProduct.receipt = receiptData;
-        [subscriptionProduct verifyReceiptOnComplete:^(NSNumber* isActive)
-         {
-             [[NSNotificationCenter defaultCenter] postNotificationName:kSubscriptionsPurchasedNotification
-                                                                 object:productIdentifier];
-             
-             //[MKStoreManager setObject:receiptData forKey:productIdentifier];
-             if(self.onTransactionCompleted)
-             {
-                 __block BOOL *finishTransaction = NO;
-                 self.onTransactionCompleted(transaction, finishTransaction);
-                 if (finishTransaction)
-                 {
-                     [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
-                 }
-             }
-         }
-                                             onError:^(NSError* error)
-         {
-             NSLog(@"%@", [error description]);
-         }];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kSubscriptionsPurchasedNotification
+                                                            object:productIdentifier];
+        
+        //[MKStoreManager setObject:receiptData forKey:productIdentifier];
+        if(self.onTransactionCompleted)
+        {
+            self.onTransactionCompleted(transaction);
+        }
+        else
+        {
+            NSLog(@"TRANSACTION COMPLETED BUT NO BLOCKS %@", transaction.payment.productIdentifier);
+        }
     }
     else
     {
@@ -644,12 +645,7 @@ static MKStoreManager* _sharedStoreManager;
             [self rememberPurchaseOfProduct:productIdentifier withReceipt:receiptData];
             if(self.onTransactionCompleted)
             {
-                __block BOOL *finishTransaction = NO;
-                self.onTransactionCompleted(transaction, finishTransaction);
-                if (finishTransaction)
-                {
-                    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-                }
+                self.onTransactionCompleted(transaction);
             }
             
         }
