@@ -227,6 +227,7 @@ static MKStoreManager* _sharedStoreManager;
                         onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction)) restoredTransactionBlock
                                       onError:(void (^)(NSError* error)) errorBlock
 {
+    self.onTransactionCompleted = nil;
     self.onRestoreCompleted = completionBlock;
     self.onRestoreFailed = errorBlock;
     self.onTransactionRestored = restoredTransactionBlock;
@@ -592,10 +593,6 @@ static MKStoreManager* _sharedStoreManager;
         if(self.onTransactionCompleted)
         {
             self.onTransactionCompleted(transaction);
-        }
-        else
-        {
-            NSLog(@"TRANSACTION COMPLETED BUT NO BLOCKS %@", transaction.payment.productIdentifier);
         }
     }
     else
