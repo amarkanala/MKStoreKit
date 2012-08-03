@@ -55,31 +55,35 @@
 // These are the methods you will be using in your app
 + (MKStoreManager*)sharedManager;
 
+@property (nonatomic, strong) NSDictionary *storeKitItems;
+
 // this is a static method, since it doesn't require the store manager to be initialized prior to calling
-+ (BOOL) isFeaturePurchased:(NSString*) featureId; 
++ (BOOL)isFeaturePurchased:(NSString*) featureId; 
 //returns a dictionary with all prices for identifiers
 - (NSMutableDictionary *)pricesDictionary;
 - (NSMutableArray*) purchasableObjectsDescription;
 
 // use this method to invoke a purchase
-- (void) buyFeature:(NSString*) featureId
-         onComplete:(void (^)(NSString* purchasedFeature, NSData*purchasedReceipt)) completionBlock         
+- (void)buyFeature:(NSString*) featureId
+         onComplete:(void (^)(SKPaymentTransaction *completedTransaction, BOOL *finishTransaction)) completionBlock
         onCancelled:(void (^)(void)) cancelBlock;
 
 // use this method to restore a purchase
-- (void) restorePreviousTransactionsOnComplete:(void (^)(void)) completionBlock
+- (void)restorePreviousTransactionsOnComplete:(void (^)()) completionBlock
+                         onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction, BOOL *finishTransaction)) restoredTransactionBlock
                                        onError:(void (^)(NSError* error)) errorBlock;
 
-- (BOOL) canConsumeProduct:(NSString*) productName quantity:(int) quantity;
-- (BOOL) consumeProduct:(NSString*) productName quantity:(int) quantity;
-- (BOOL) isSubscriptionActive:(NSString*) featureId;
+- (BOOL)canConsumeProduct:(NSString*) productName quantity:(int) quantity;
+- (BOOL)consumeProduct:(NSString*) productName quantity:(int) quantity;
+//- (BOOL)isSubscriptionActive:(NSString*) featureId;
 //for testing proposes you can use this method to remove all the saved keychain data (saved purchases, etc.)
-- (BOOL) removeAllKeychainData;
+- (BOOL)removeAllKeychainData;
 
-+(id) receiptForKey:(NSString*) key;
-+(void) setObject:(id) object forKey:(NSString*) key;
-+(NSNumber*) numberForKey:(NSString*) key;
++ (id)receiptForKey:(NSString*) key;
++ (void)setObject:(id) object forKey:(NSString*) key;
++ (NSNumber*)numberForKey:(NSString*) key;
 
--(void) restoreCompleted;
--(void) restoreFailedWithError:(NSError*) error;
+- (void)restoreCompleted;
+- (void)restoreTransaction:(SKPaymentTransaction*)transaction;
+- (void)restoreFailedWithError:(NSError*) error;
 @end
