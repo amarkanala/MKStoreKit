@@ -416,8 +416,9 @@ static MKStoreManager* _sharedStoreManager;
 		[numberFormatter setNumberStyle:NSNumberFormatterCurrencyStyle];
 		[numberFormatter setLocale:product.priceLocale];
 		NSString *formattedString = [numberFormatter stringFromNumber:product.price];
+        NSString *currencyCode = [numberFormatter currencyCode];
         
-        NSString *priceString = [NSString stringWithFormat:@"%@", formattedString];
+        NSString *priceString = [NSString stringWithFormat:@"%@%@", currencyCode,formattedString];
         [priceDict setObject:priceString forKey:product.productIdentifier];
         
     }
