@@ -56,6 +56,7 @@
 + (MKStoreManager*)sharedManager;
 
 @property (nonatomic, strong) NSDictionary *storeKitItems;
+@property (nonatomic, strong) NSMutableArray *restoredTransactions;
 
 // this is a static method, since it doesn't require the store manager to be initialized prior to calling
 + (BOOL)isFeaturePurchased:(NSString*) featureId; 
@@ -71,7 +72,7 @@
 - (void)onUnfinishedTransactionCompleted:(void (^)(SKPaymentTransaction *completedTransaction))completionBlock;
 
 // use this method to restore a purchase
-- (void)restorePreviousTransactionsOnComplete:(void (^)()) completionBlock
+- (void)restorePreviousTransactionsOnComplete:(void (^)(NSMutableArray *restoredTransactions)) completionBlock
                          onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction)) restoredTransactionBlock
                                        onError:(void (^)(NSError* error)) errorBlock;
 

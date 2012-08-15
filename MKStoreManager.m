@@ -47,7 +47,7 @@
 @property (nonatomic, copy) void (^onTransactionCompleted)(SKPaymentTransaction *completedTransaction);
 
 @property (nonatomic, copy) void (^onRestoreFailed)(NSError* error);
-@property (nonatomic, copy) void (^onRestoreCompleted)();
+@property (nonatomic, copy) void (^onRestoreCompleted)(NSMutableArray *restoredTransactions);
 @property (nonatomic, copy) void (^onTransactionRestored)(SKPaymentTransaction *restoredTransaction);
 
 @property (nonatomic, strong) NSMutableArray *purchasableObjects;
@@ -77,8 +77,6 @@
 @synthesize onRestoreFailed;
 @synthesize onRestoreCompleted;
 @synthesize onTransactionRestored;
-@synthesize storeKitItems = _storeKitItems;
-
 @synthesize productsRequest;
 
 static MKStoreManager* _sharedStoreManager;
@@ -223,10 +221,11 @@ static MKStoreManager* _sharedStoreManager;
     [_sharedStoreManager requestProductData];
 }
 
-- (void)restorePreviousTransactionsOnComplete:(void (^)()) completionBlock
+- (void)restorePreviousTransactionsOnComplete:(void (^)(NSMutableArray *restoredTransactions)) completionBlock
                         onTransactionRestored:(void (^)(SKPaymentTransaction *restoredTransaction)) restoredTransactionBlock
                                       onError:(void (^)(NSError* error)) errorBlock
 {
+    self.restoredTransactions = [NSMutableArray array];
     self.onTransactionCompleted = nil;
     self.onRestoreCompleted = completionBlock;
     self.onRestoreFailed = errorBlock;
@@ -238,7 +237,7 @@ static MKStoreManager* _sharedStoreManager;
 - (void)restoreCompleted
 {
     if(self.onRestoreCompleted)
-        self.onRestoreCompleted();
+        self.onRestoreCompleted(self.restoredTransactions);
     self.onRestoreCompleted = nil;
     self.onTransactionRestored = nil;
 }
@@ -250,6 +249,7 @@ static MKStoreManager* _sharedStoreManager;
 
 - (void)restoreTransaction:(SKPaymentTransaction*)transaction
 {
+    [self.restoredTransactions addObject:transaction];
     if (self.onTransactionRestored)
     {
         self.onTransactionRestored(transaction);
