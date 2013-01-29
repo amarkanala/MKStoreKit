@@ -68,6 +68,8 @@
 
 - (void)paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue *)queue
 {
+    NSMutableArray *restoredTransactions = (NSMutableArray*)queue.transactions;
+    [[MKStoreManager sharedManager] setRestoredTransactions:restoredTransactions];
     [[MKStoreManager sharedManager] restoreCompleted];
 }
 
